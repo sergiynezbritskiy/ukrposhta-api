@@ -1,6 +1,6 @@
 # Ukrposhta API
 
-Library for connecting your PHP application with Ukrposhta API
+Library for connecting your PHP application with Ukrposhta REST API
 
 [![codecov](https://codecov.io/gh/sergiynezbritskiy/ukrposhta-api/branch/master/graph/badge.svg)](https://codecov.io/gh/sergiynezbritskiy/ukrposhta-api)
 
