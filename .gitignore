@@ -1,2 +1,10 @@
+.idea
+/vendor/
 /tmp/*
 !/tmp/.gitkeep
+.phpunit.result.cache
+phpunit.xml
+composer.lock
+/var/*
+!/var/.gitkeep
+coverage.xml

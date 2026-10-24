@@ -1,0 +1,46 @@
+{
+    "name": "sergiynezbritskiy/ukrposhta-api",
+    "description": "Library for connecting to Ukrposhta API",
+    "type": "library",
+    "license": "OSL-3.0",
+    "autoload": {
+        "psr-4": {
+            "SergiyNezbritskiy\\Ukrposhta\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SergiyNezbritskiy\\Ukrposhta\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "guzzlehttp/guzzle": "^7.5"
+    },
+    "require-dev": {
+        "phpcompatibility/php-compatibility": "^9.3",
+        "phpmd/phpmd": "^2.13",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^11.0",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "scripts": {
+        "phpcs": "XDEBUG_MODE=off vendor/bin/phpcs --standard=phpcs.xml",
+        "fix": "XDEBUG_MODE=off vendor/bin/phpcbf --standard=phpcs.xml",
+        "phpmd": "XDEBUG_MODE=off vendor/bin/phpmd src,tests text phpmd.xml",
+        "phpstan": "XDEBUG_MODE=off vendor/bin/phpstan analyse src tests --level=6",
+        "tests": "XDEBUG_MODE=coverage vendor/bin/phpunit --stop-on-failure --stop-on-error --coverage-html=var/reports/coverage --coverage-clover=var/reports/coverage.xml",
+        "tests-debug": "vendor/bin/phpunit  --coverage-html=var/reports/coverage --coverage-clover=var/reports/coverage.xml",
+        "all": [
+            "@phpcs",
+            "@phpmd",
+            "@phpstan",
+            "@tests"
+        ]
+    },
+    "minimum-stability": "stable"
+}
