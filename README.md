@@ -2,11 +2,11 @@
 
 Library for connecting your PHP application with Ukrposhta REST API
 
-[![codecov](https://codecov.io/gh/sergiynezbritskiy/ukrposhta-api/branch/master/graph/badge.svg)](https://codecov.io/gh/sergiynezbritskiy/ukrposhta-api)
+[![codecov](https://codecov.io/gh/sergiynezbritskiy/ukrposhta-api/branch/main/graph/badge.svg)](https://codecov.io/gh/sergiynezbritskiy/ukrposhta-api)
 
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/?branch=master)
-[![Build Status](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/badges/build.png?b=master)](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/build-status/master)
-[![Code Intelligence Status](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/badges/code-intelligence.svg?b=master)](https://scrutinizer-ci.com/code-intelligence)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/badges/quality-score.png?b=main)](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/?branch=main)
+[![Build Status](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/badges/build.png?b=main)](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/build-status/main)
+[![Code Intelligence Status](https://scrutinizer-ci.com/g/sergiynezbritskiy/ukrposhta-api/badges/code-intelligence.svg?b=main)](https://scrutinizer-ci.com/code-intelligence)
 
 [![Latest Stable Version](http://poser.pugx.org/sergiynezbritskiy/ukrposhta-api/v)](https://packagist.org/packages/sergiynezbritskiy/ukrposhta-api)
 [![Total Downloads](http://poser.pugx.org/sergiynezbritskiy/ukrposhta-api/downloads)](https://packagist.org/packages/sergiynezbritskiy/ukrposhta-api)
