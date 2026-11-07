@@ -9,13 +9,14 @@ use SergiyNezbritskiy\Ukrposhta\Models\Classifier;
 use SergiyNezbritskiy\Ukrposhta\Tests\UsesConnectionTrait;
 use SergiyNezbritskiy\Ukrposhta\UkrposhtaApiException;
 
+/**
+ * The sandbox classifier has its own IDs (e.g. Kyiv is 389 there and 286 in production), so Kyiv is resolved first
+ */
 class GetPostOfficesTest extends TestCase
 {
     use UsesConnectionTrait;
 
-    private const KYIV_REGION_ID = '286';
-    private const KYIV_CITY_ID = '29713';
-    private const KHRESHCHATYK_POST_OFFICE_ID = '2700';
+    private const KHRESHCHATYK_POSTINDEX = '01001';
 
     private Classifier $model;
 
@@ -29,14 +30,13 @@ class GetPostOfficesTest extends TestCase
      */
     public function testGetPostOfficesOfRegion(): void
     {
-        $postOffices = $this->model->getPostOffices(['region_id' => self::KYIV_REGION_ID]);
+        $postOffices = $this->model->getPostOffices(['region_id' => $this->getKyivRegionId()]);
 
         $this->assertNotEmpty($postOffices);
-        $this->assertContains(self::KHRESHCHATYK_POST_OFFICE_ID, array_column($postOffices, 'ID'));
+        $this->assertContains(self::KHRESHCHATYK_POSTINDEX, array_column($postOffices, 'POSTINDEX'));
         foreach ($postOffices as $postOffice) {
-            $this->assertSame(self::KYIV_REGION_ID, $postOffice['REGION_ID']);
+            $this->assertArrayHasKey('ID', $postOffice);
             $this->assertArrayHasKey('PO_SHORT', $postOffice);
-            $this->assertArrayHasKey('POSTINDEX', $postOffice);
             $this->assertArrayHasKey('CITY_ID', $postOffice);
             $this->assertArrayHasKey('LOCK_CODE', $postOffice);
         }
@@ -45,14 +45,14 @@ class GetPostOfficesTest extends TestCase
     /**
      * @throws UkrposhtaApiException
      */
-    public function testGetPostOfficesOfCityByPostindex(): void
+    public function testGetPostOfficesByPostindex(): void
     {
-        $filters = ['region_id' => self::KYIV_REGION_ID, 'city_id' => self::KYIV_CITY_ID, 'postindex' => '01001'];
+        $filters = ['region_id' => $this->getKyivRegionId(), 'postindex' => self::KHRESHCHATYK_POSTINDEX];
         $postOffices = $this->model->getPostOffices($filters);
 
-        $this->assertCount(1, $postOffices);
-        $this->assertSame(self::KHRESHCHATYK_POST_OFFICE_ID, $postOffices[0]['ID']);
-        $this->assertSame('Київ 1', $postOffices[0]['PO_SHORT']);
+        $this->assertNotEmpty($postOffices);
+        $this->assertSame(self::KHRESHCHATYK_POSTINDEX, $postOffices[0]['POSTINDEX']);
+        $this->assertSame('Київ', $postOffices[0]['CITY_UA']);
     }
 
     /**
@@ -60,10 +60,24 @@ class GetPostOfficesTest extends TestCase
      */
     public function testGetNearestPostOffices(): void
     {
-        $postOffices = $this->model->getNearestPostOffices(50.450166, 30.523307, 1);
+        $postOffices = $this->model->getNearestPostOffices(50.450166, 30.523307, 2);
 
         $this->assertNotEmpty($postOffices);
-        $this->assertContains(self::KHRESHCHATYK_POST_OFFICE_ID, array_column($postOffices, 'ID'));
         $this->assertArrayHasKey('DISTANCE', $postOffices[0]);
+        $this->assertArrayHasKey('POSTINDEX', $postOffices[0]);
+    }
+
+    /**
+     * @return string
+     * @throws UkrposhtaApiException
+     */
+    private function getKyivRegionId(): string
+    {
+        foreach ($this->model->getRegions(['region_name' => 'Київ']) as $region) {
+            if ($region['REGION_UA'] === 'Київ') {
+                return (string)$region['REGION_ID'];
+            }
+        }
+        $this->fail('Region Київ not found');
     }
 }

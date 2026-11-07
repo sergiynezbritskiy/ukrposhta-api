@@ -71,40 +71,41 @@ class CrudTest extends TestCase implements ConstantsInterface
             'addressId' => $this->createAddress($this->getConnection(), self::SENDER_ADDRESS),
         ]);
         $addresses = $this->model->getAddresses($clientUuid);
-        $this->assertCount(2, $addresses);
         $secondaryAddress = $this->findEntity(
             $addresses,
             fn(array $address) => !$address['main'],
             'Secondary address'
         );
+        $this->assertCount(2, $addresses);
         $this->model->deleteAddress($secondaryAddress['uuid']);
         $addresses = $this->model->getAddresses($clientUuid);
         $this->assertCount(1, $addresses);
         $this->assertTrue((bool)$addresses[0]['main'], 'The main address can not be removed');
 
         $phones = $this->model->getPhones($clientUuid);
-        $this->assertCount(2, $phones);
         $phoneToDelete = $this->findEntity(
             $phones,
             fn(array $phone) => !str_contains((string)$phone['phoneNumber'], $updatedPhone),
             'Secondary phone'
         );
+        $this->assertCount(2, $phones);
         $this->model->deletePhone($phoneToDelete['uuid']);
         $this->assertCount(1, $this->model->getPhones($clientUuid));
 
         $emails = $this->model->getEmails($clientUuid);
-        $this->assertCount(2, $emails);
         $emailToDelete = $this->findEntity(
             $emails,
             fn(array $email) => $email['email'] !== $updatedEmail,
             'Secondary email'
         );
+        $this->assertCount(2, $emails);
         $this->model->deleteEmail($emailToDelete['uuid']);
         $this->assertCount(1, $this->model->getEmails($clientUuid));
     }
 
     /**
-     * Finds the first entity matching the condition, fails the test if there is none
+     * Finds the first entity matching the condition, fails the test if there is none.
+     * Call it before assertCount(): Scrutinizer narrows the asserted variable to Countable|iterable
      *
      * @param iterable<array> $entities
      * @param callable $matches

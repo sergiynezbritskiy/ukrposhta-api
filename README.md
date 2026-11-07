@@ -90,9 +90,11 @@ $postOffices = $client->classifier->getPostOffices(['region_id' => 286]);
 $nearest = $client->classifier->getNearestPostOffices(50.450166, 30.523307, 2);
 ```
 
-The classifier is authorized with the bearer only and has no sandbox host, so `https://www.ukrposhta.ua` is used
-regardless of the `sandbox` option. Pass `'classifier_uri' => 'https://...'` in the client options to override it.
-Post offices with `LOCK_CODE` other than `Classifier::LOCK_CODE_ACTIVE` are blocked.
+The classifier is authorized with the bearer only. With `'sandbox' => true` the sandbox classifier
+(`https://dev.ukrposhta.ua/address-classifier-ws/`) is used; mind that its IDs differ from the production ones
+(e.g. the Kyiv region is 389 in the sandbox and 286 in production). Pass `'classifier_uri' => 'https://...'` in the
+client options to override the base URL. Post offices with `LOCK_CODE` other than `Classifier::LOCK_CODE_ACTIVE`
+are blocked.
 
 ## Notes
 

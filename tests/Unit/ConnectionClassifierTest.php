@@ -64,7 +64,7 @@ class ConnectionClassifierTest extends TestCase
      * @throws Exception
      * @throws UkrposhtaApiException
      */
-    public function testClassifierIgnoresSandbox(): void
+    public function testClassifierSandbox(): void
     {
         $options = [Connection::OPTION_SANDBOX => true];
         $connection = new Connection(self::BEARER, self::TOKEN, $this->clientMock, $options);
@@ -73,12 +73,12 @@ class ConnectionClassifierTest extends TestCase
             ->method('request')
             ->with(
                 'GET',
-                'https://www.ukrposhta.ua/address-classifier-ws/get_postoffices_by_city_id',
+                'https://dev.ukrposhta.ua/address-classifier-ws/get_postoffices_by_city_id',
                 $this->anything()
             )
             ->willReturn($this->createResponse('[]'));
 
-        $connection->getClassifier('get_postoffices_by_city_id', ['region_id' => '286']);
+        $connection->getClassifier('get_postoffices_by_city_id', ['region_id' => '389']);
     }
 
     /**
@@ -87,14 +87,17 @@ class ConnectionClassifierTest extends TestCase
      */
     public function testClassifierUriOverride(): void
     {
-        $options = [Connection::OPTION_CLASSIFIER_URI => 'https://dev.ukrposhta.ua/address-classifier-ws/'];
+        $options = [
+            Connection::OPTION_SANDBOX => true,
+            Connection::OPTION_CLASSIFIER_URI => 'https://classifier.example.com/',
+        ];
         $connection = new Connection(self::BEARER, self::TOKEN, $this->clientMock, $options);
         /** @scrutinizer ignore-deprecated */
         $this->clientMock->expects($this->once())
             ->method('request')
             ->with(
                 'GET',
-                'https://dev.ukrposhta.ua/address-classifier-ws/get_regions_by_region_ua',
+                'https://classifier.example.com/get_regions_by_region_ua',
                 $this->callback(fn(array $options): bool => !isset($options[Connection::OPTION_CLASSIFIER_URI]))
             )
             ->willReturn($this->createResponse('[]'));

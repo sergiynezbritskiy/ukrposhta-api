@@ -29,8 +29,8 @@ class Connection
     private const FORMS_URI = 'https://www.ukrposhta.ua/forms/ecom/0.0.1/';
     private const SANDBOX_API_URI = 'https://dev.ukrposhta.ua/ecom/0.0.1/';
     private const SANDBOX_FORMS_URI = 'https://dev.ukrposhta.ua/forms/ecom/0.0.1/';
-    /** The address classifier has no documented sandbox host, so it is used for the sandbox as well */
     private const CLASSIFIER_URI = 'https://www.ukrposhta.ua/address-classifier-ws/';
+    private const SANDBOX_CLASSIFIER_URI = 'https://dev.ukrposhta.ua/address-classifier-ws/';
     private const ERROR_MSG_TEMPLATE = 'Connection to Ukrposhta API failed: %s';
 
     private string $bearer;
@@ -55,7 +55,8 @@ class Connection
         $this->client = $client;
 
         $sandbox = (bool)($options[self::OPTION_SANDBOX] ?? false);
-        $this->classifierUri = (string)($options[self::OPTION_CLASSIFIER_URI] ?? self::CLASSIFIER_URI);
+        $defaultClassifierUri = $sandbox ? self::SANDBOX_CLASSIFIER_URI : self::CLASSIFIER_URI;
+        $this->classifierUri = (string)($options[self::OPTION_CLASSIFIER_URI] ?? $defaultClassifierUri);
         unset($options[self::OPTION_SANDBOX], $options[self::OPTION_CLASSIFIER_URI]);
         $this->options = $options;
 

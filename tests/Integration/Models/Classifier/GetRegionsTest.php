@@ -28,12 +28,13 @@ class GetRegionsTest extends TestCase
         $regions = $this->model->getRegions(['region_name' => 'Київ']);
 
         $this->assertNotEmpty($regions);
-        $ids = array_column($regions, 'REGION_ID');
-        $this->assertContains('286', $ids, 'Київ (286) expected');
-        $this->assertContains('270', $ids, 'Київська (270) expected');
+        $names = array_column($regions, 'REGION_UA');
+        $this->assertContains('Київ', $names);
+        $this->assertContains('Київська', $names, 'the classifier matches by the part of the name');
         foreach ($regions as $region) {
-            $this->assertArrayHasKey('REGION_UA', $region);
+            $this->assertArrayHasKey('REGION_ID', $region);
             $this->assertArrayHasKey('REGION_EN', $region);
+            $this->assertNotEmpty($region['REGION_ID']);
         }
     }
 
@@ -44,6 +45,6 @@ class GetRegionsTest extends TestCase
     {
         $regions = $this->model->getRegions(['region_name_en' => 'Kyivska']);
 
-        $this->assertContains('270', array_column($regions, 'REGION_ID'));
+        $this->assertContains('Київська', array_column($regions, 'REGION_UA'));
     }
 }
