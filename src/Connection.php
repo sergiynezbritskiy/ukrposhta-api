@@ -203,11 +203,17 @@ class Connection
      * @param array $query
      * @param array|null $body
      * @return array
+     * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public function buildOptions(array $query, ?array $body = null): array
     {
         $query['token'] = $this->token;
-        return $this->mergeOptions($query, $body, ['Accept' => 'application/json, application/pdf']);
+        $options = $this->mergeOptions($query, ['Accept' => 'application/json, application/pdf']);
+        if ($body !== null) {
+            $options[RequestOptions::BODY] = Utils::jsonEncode($body, JSON_UNESCAPED_UNICODE);
+            $options[RequestOptions::HEADERS]['Content-Type'] = 'application/json';
+        }
+        return $options;
     }
 
     /**
@@ -218,17 +224,17 @@ class Connection
      */
     public function buildClassifierOptions(array $query): array
     {
-        return $this->mergeOptions($query, null, ['Accept' => 'application/json']);
+        return $this->mergeOptions($query, ['Accept' => 'application/json']);
     }
 
     /**
+     * Merge the default options, the client options and the mandatory options of a request
+     *
      * @param array $query
-     * @param array|null $body
      * @param array $headers
      * @return array
-     * @SuppressWarnings(PHPMD.StaticAccess)
      */
-    private function mergeOptions(array $query, ?array $body, array $headers): array
+    private function mergeOptions(array $query, array $headers): array
     {
         $defaultOptions = [
             RequestOptions::TIMEOUT => 30,
@@ -240,11 +246,6 @@ class Connection
             RequestOptions::QUERY => array_filter($query),
             RequestOptions::HEADERS => $headers,
         ];
-
-        if ($body !== null) {
-            $mandatoryOptions[RequestOptions::BODY] = Utils::jsonEncode($body, JSON_UNESCAPED_UNICODE);
-            $mandatoryOptions[RequestOptions::HEADERS]['Content-Type'] = 'application/json';
-        }
 
         return array_merge($defaultOptions, $this->options, $mandatoryOptions);
     }

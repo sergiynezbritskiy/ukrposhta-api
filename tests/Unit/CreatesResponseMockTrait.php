@@ -12,6 +12,14 @@ use Psr\Http\Message\StreamInterface;
 trait CreatesResponseMockTrait
 {
     /**
+     * Provided by \PHPUnit\Framework\TestCase
+     *
+     * @param string $originalClassName
+     * @return MockObject
+     */
+    abstract protected function createMock(string $originalClassName): MockObject;
+
+    /**
      * @param string $content
      * @param int $statusCode
      * @param string $reasonPhrase

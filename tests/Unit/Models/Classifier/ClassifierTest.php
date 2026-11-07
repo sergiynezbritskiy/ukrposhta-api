@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SergiyNezbritskiy\Ukrposhta\Tests\Unit\Models\Classifier;
 
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -19,15 +18,17 @@ class ClassifierTest extends TestCase
     private const POST_OFFICE = ['ID' => '266', 'PO_SHORT' => 'Київ 26', 'POSTINDEX' => '03026', 'LOCK_CODE' => '0'];
 
     private Classifier $model;
-    private Connection|MockObject $connection;
+    /** mock of the Connection */
+    private MockObject $connection;
 
     /**
      * @throws Exception
      */
     protected function setUp(): void
     {
-        $this->connection = $this->createMock(Connection::class);
-        $this->model = new Classifier($this->connection);
+        $connection = $this->createMock(Connection::class);
+        $this->connection = $connection;
+        $this->model = new Classifier($connection);
     }
 
     /**
@@ -109,24 +110,12 @@ class ClassifierTest extends TestCase
     }
 
     /**
-     * @param array $response
-     * @param array $expected
+     * @throws Exception
      * @throws UkrposhtaApiException
      */
-    #[DataProvider('unwrapDataProvider')]
-    public function testUnwrap(array $response, array $expected): void
+    public function testUnwrap(): void
     {
-        $this->connection->method('getClassifier')->willReturn($response);
-
-        $this->assertSame($expected, $this->model->getPostOffices(['region_id' => '286']));
-    }
-
-    /**
-     * @return array
-     */
-    public static function unwrapDataProvider(): array
-    {
-        return [
+        $cases = [
             'list' => [['Entries' => ['Entry' => [self::POST_OFFICE, self::KYIV]]], [self::POST_OFFICE, self::KYIV]],
             'single entry as object' => [['Entries' => ['Entry' => self::POST_OFFICE]], [self::POST_OFFICE]],
             'empty list' => [['Entries' => ['Entry' => []]], []],
@@ -135,6 +124,13 @@ class ClassifierTest extends TestCase
             'no entries' => [['Entries' => null], []],
             'empty response' => [[], []],
         ];
+        foreach ($cases as $case => [$response, $expected]) {
+            $connection = $this->createMock(Connection::class);
+            $connection->method('getClassifier')->willReturn($response);
+            $model = new Classifier($connection);
+
+            $this->assertSame($expected, $model->getPostOffices(['region_id' => '286']), $case);
+        }
     }
 
     public function testLockCodes(): void
