@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SergiyNezbritskiy\Ukrposhta\Tests\Integration\Models\Classifier;
 
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use SergiyNezbritskiy\Ukrposhta\Models\Classifier;
 use SergiyNezbritskiy\Ukrposhta\Tests\UsesConnectionTrait;
@@ -78,6 +79,6 @@ class GetPostOfficesTest extends TestCase
                 return (string)$region['REGION_ID'];
             }
         }
-        $this->fail('Region Київ not found');
+        throw new AssertionFailedError('Region Київ not found');
     }
 }
