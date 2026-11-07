@@ -14,18 +14,23 @@ use Psr\Http\Message\ResponseInterface;
  * Class Connection
  *
  * Low level HTTP layer. Every request is authorized with the `Authorization: Bearer` header
- * and the counterparty `token` query parameter.
+ * and the counterparty `token` query parameter, except the address classifier requests which
+ * are authorized with the bearer only.
  *
  * @see https://app.swaggerhub.com/apis-docs/Ukrpost/ukrpost-api/1.0
+ * @see https://dev.ukrposhta.ua/documentation address classifier
  */
 class Connection
 {
     public const OPTION_SANDBOX = 'sandbox';
+    public const OPTION_CLASSIFIER_URI = 'classifier_uri';
 
     private const API_URI = 'https://www.ukrposhta.ua/ecom/0.0.1/';
     private const FORMS_URI = 'https://www.ukrposhta.ua/forms/ecom/0.0.1/';
     private const SANDBOX_API_URI = 'https://dev.ukrposhta.ua/ecom/0.0.1/';
     private const SANDBOX_FORMS_URI = 'https://dev.ukrposhta.ua/forms/ecom/0.0.1/';
+    /** The address classifier has no documented sandbox host, so it is used for the sandbox as well */
+    private const CLASSIFIER_URI = 'https://www.ukrposhta.ua/address-classifier-ws/';
     private const ERROR_MSG_TEMPLATE = 'Connection to Ukrposhta API failed: %s';
 
     private string $bearer;
@@ -34,12 +39,14 @@ class Connection
     private array $options; //@phpstan-ignore-line
     private string $apiUri;
     private string $formsUri;
+    private string $classifierUri;
 
     /**
      * @param string $bearer Bearer eCom, issued by Ukrposhta
      * @param string $token Counterparty token, issued by Ukrposhta
      * @param HttpClient $client
-     * @param array $options Guzzle request options. The `sandbox` option (bool) switches to the sandbox hosts.
+     * @param array $options Guzzle request options. The `sandbox` option (bool) switches to the sandbox hosts,
+     *     the `classifier_uri` option (string) overrides the address classifier base URL.
      */
     public function __construct(string $bearer, string $token, HttpClient $client, array $options = [])
     {
@@ -48,7 +55,8 @@ class Connection
         $this->client = $client;
 
         $sandbox = (bool)($options[self::OPTION_SANDBOX] ?? false);
-        unset($options[self::OPTION_SANDBOX]);
+        $this->classifierUri = (string)($options[self::OPTION_CLASSIFIER_URI] ?? self::CLASSIFIER_URI);
+        unset($options[self::OPTION_SANDBOX], $options[self::OPTION_CLASSIFIER_URI]);
         $this->options = $options;
 
         $this->apiUri = $sandbox ? self::SANDBOX_API_URI : self::API_URI;
@@ -63,7 +71,7 @@ class Connection
      */
     public function get(string $uri, array $query = []): array
     {
-        return $this->decode($this->request('GET', $this->apiUri . $uri, $query));
+        return $this->decode($this->request('GET', $this->apiUri . $uri, $this->buildOptions($query)));
     }
 
     /**
@@ -75,7 +83,7 @@ class Connection
      */
     public function post(string $uri, array $body = [], array $query = []): array
     {
-        return $this->decode($this->request('POST', $this->apiUri . $uri, $query, $body));
+        return $this->decode($this->request('POST', $this->apiUri . $uri, $this->buildOptions($query, $body)));
     }
 
     /**
@@ -87,7 +95,7 @@ class Connection
      */
     public function put(string $uri, array $body = [], array $query = []): array
     {
-        return $this->decode($this->request('PUT', $this->apiUri . $uri, $query, $body));
+        return $this->decode($this->request('PUT', $this->apiUri . $uri, $this->buildOptions($query, $body)));
     }
 
     /**
@@ -98,7 +106,7 @@ class Connection
      */
     public function delete(string $uri, array $query = []): array
     {
-        return $this->decode($this->request('DELETE', $this->apiUri . $uri, $query));
+        return $this->decode($this->request('DELETE', $this->apiUri . $uri, $this->buildOptions($query)));
     }
 
     /**
@@ -111,21 +119,34 @@ class Connection
      */
     public function getFile(string $uri, array $query = []): string
     {
-        return $this->request('GET', $this->formsUri . $uri, $query);
+        return $this->request('GET', $this->formsUri . $uri, $this->buildOptions($query));
+    }
+
+    /**
+     * Fetches data from the address classifier API, which is authorized with the bearer only
+     *
+     * @param string $uri
+     * @param array $query
+     * @return array
+     * @throws UkrposhtaApiException
+     */
+    public function getClassifier(string $uri, array $query = []): array
+    {
+        $options = $this->buildClassifierOptions($query);
+        return $this->decode($this->request('GET', $this->classifierUri . $uri, $options));
     }
 
     /**
      * @param string $method
      * @param string $uri
-     * @param array $query
-     * @param array|null $body
+     * @param array $options Guzzle request options, see self::buildOptions()
      * @return string response body
      * @throws UkrposhtaApiException
      */
-    private function request(string $method, string $uri, array $query = [], ?array $body = null): string
+    private function request(string $method, string $uri, array $options): string
     {
         try {
-            $response = $this->client->request($method, $uri, $this->buildOptions($query, $body));
+            $response = $this->client->request($method, $uri, $options);
             $content = $response->getBody()->getContents();
             $statusCode = $response->getStatusCode();
             if ($statusCode < 200 || $statusCode >= 300) {
@@ -177,24 +198,47 @@ class Connection
     }
 
     /**
+     * Build the options of an eCom API request: the counterparty token is sent in the query string
+     *
      * @param array $query
      * @param array|null $body
      * @return array
-     * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public function buildOptions(array $query, ?array $body = null): array
+    {
+        $query['token'] = $this->token;
+        return $this->mergeOptions($query, $body, ['Accept' => 'application/json, application/pdf']);
+    }
+
+    /**
+     * Build the options of an address classifier request: authorized with the bearer only
+     *
+     * @param array $query
+     * @return array
+     */
+    public function buildClassifierOptions(array $query): array
+    {
+        return $this->mergeOptions($query, null, ['Accept' => 'application/json']);
+    }
+
+    /**
+     * @param array $query
+     * @param array|null $body
+     * @param array $headers
+     * @return array
+     * @SuppressWarnings(PHPMD.StaticAccess)
+     */
+    private function mergeOptions(array $query, ?array $body, array $headers): array
     {
         $defaultOptions = [
             RequestOptions::TIMEOUT => 30,
         ];
 
+        $headers['Authorization'] = 'Bearer ' . $this->bearer;
         $mandatoryOptions = [
             RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::QUERY => array_filter(array_merge($query, ['token' => $this->token])),
-            RequestOptions::HEADERS => [
-                'Authorization' => 'Bearer ' . $this->bearer,
-                'Accept' => 'application/json, application/pdf',
-            ],
+            RequestOptions::QUERY => array_filter($query),
+            RequestOptions::HEADERS => $headers,
         ];
 
         if ($body !== null) {

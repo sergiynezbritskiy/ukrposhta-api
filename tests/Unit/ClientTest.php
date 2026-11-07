@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SergiyNezbritskiy\Ukrposhta\Client;
 use SergiyNezbritskiy\Ukrposhta\Connection;
 use SergiyNezbritskiy\Ukrposhta\Models\Address;
+use SergiyNezbritskiy\Ukrposhta\Models\Classifier;
 use SergiyNezbritskiy\Ukrposhta\Models\Client as ClientModel;
 use SergiyNezbritskiy\Ukrposhta\Models\Forms;
 use SergiyNezbritskiy\Ukrposhta\Models\Shipment;
@@ -34,5 +35,6 @@ class ClientTest extends TestCase
         $this->assertInstanceOf(Shipment::class, $this->object->shipment);
         $this->assertInstanceOf(ShipmentGroup::class, $this->object->shipmentGroup);
         $this->assertInstanceOf(Forms::class, $this->object->forms);
+        $this->assertInstanceOf(Classifier::class, $this->object->classifier);
     }
 }

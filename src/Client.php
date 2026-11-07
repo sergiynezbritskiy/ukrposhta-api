@@ -6,6 +6,7 @@ namespace SergiyNezbritskiy\Ukrposhta;
 
 use GuzzleHttp\Client as HttpClient;
 use SergiyNezbritskiy\Ukrposhta\Models\Address;
+use SergiyNezbritskiy\Ukrposhta\Models\Classifier;
 use SergiyNezbritskiy\Ukrposhta\Models\Client as ClientModel;
 use SergiyNezbritskiy\Ukrposhta\Models\Forms;
 use SergiyNezbritskiy\Ukrposhta\Models\Shipment;
@@ -26,6 +27,7 @@ readonly class Client
     public Shipment $shipment;
     public ShipmentGroup $shipmentGroup;
     public Forms $forms;
+    public Classifier $classifier;
 
     /**
      * @param string $bearer Bearer eCom, issued by Ukrposhta
@@ -40,5 +42,6 @@ readonly class Client
         $this->shipment = new Shipment($connection);
         $this->shipmentGroup = new ShipmentGroup($connection);
         $this->forms = new Forms($connection);
+        $this->classifier = new Classifier($connection);
     }
 }

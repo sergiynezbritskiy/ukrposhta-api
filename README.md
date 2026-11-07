@@ -73,6 +73,27 @@ file_put_contents('sticker.pdf', $client->forms->getShipmentSticker($shipment['u
 Every other option from the request body of the corresponding endpoint can be passed through the arrays,
 see the PHPDoc of the model methods and the Swagger below.
 
+### Address classifier
+
+The address classifier returns the regions and the post offices (branches), e.g. to let a customer pick a branch:
+
+```php
+//1. find the region, the response is a list of matches by the part of the name
+$regions = $client->classifier->getRegions(['region_name' => 'Київ']); // or ['region_name_en' => 'Kyiv']
+// [['REGION_ID' => '286', 'REGION_UA' => 'Київ', 'REGION_EN' => 'Kyiv', ...], ['REGION_ID' => '270', 'REGION_UA' => 'Київська', ...]]
+
+//2. get all the post offices of the region (optionally narrowed down with district_id, city_id or postindex)
+$postOffices = $client->classifier->getPostOffices(['region_id' => 286]);
+// [['ID' => '266', 'PO_SHORT' => 'Київ 26', 'POSTINDEX' => '03026', 'ADDRESS' => 'вул. Заболотного Академіка, 37', 'LOCK_CODE' => '0', ...], ...]
+
+//3. or find the post offices near the given coordinates, within 2 km
+$nearest = $client->classifier->getNearestPostOffices(50.450166, 30.523307, 2);
+```
+
+The classifier is authorized with the bearer only and has no sandbox host, so `https://www.ukrposhta.ua` is used
+regardless of the `sandbox` option. Pass `'classifier_uri' => 'https://...'` in the client options to override it.
+Post offices with `LOCK_CODE` other than `Classifier::LOCK_CODE_ACTIVE` are blocked.
+
 ## Notes
 
 For more details please visit **[documentation](https://dev.ukrposhta.ua/documentation)**

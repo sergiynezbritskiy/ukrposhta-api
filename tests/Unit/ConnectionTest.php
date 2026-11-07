@@ -10,8 +10,6 @@ use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
 use SergiyNezbritskiy\Ukrposhta\Connection;
 use SergiyNezbritskiy\Ukrposhta\UkrposhtaApiException;
 
@@ -22,6 +20,8 @@ use SergiyNezbritskiy\Ukrposhta\UkrposhtaApiException;
  */
 class ConnectionTest extends TestCase
 {
+    use CreatesResponseMockTrait;
+
     private const BEARER = 'bearer-uuid';
     private const TOKEN = 'token-uuid';
 
@@ -217,26 +217,6 @@ class ConnectionTest extends TestCase
         $this->assertArrayNotHasKey(RequestOptions::BODY, $options);
         $this->assertArrayNotHasKey('Content-Type', $options[RequestOptions::HEADERS]);
         $this->assertSame(['token' => self::TOKEN], $options[RequestOptions::QUERY]);
-    }
-
-    /**
-     * @param string $content
-     * @param int $statusCode
-     * @param string $reasonPhrase
-     * @return ResponseInterface|MockObject
-     * @throws Exception
-     */
-    private function createResponse(
-        string $content,
-        int $statusCode = 200,
-        string $reasonPhrase = ''
-    ): ResponseInterface|MockObject {
-        $response = $this->createMock(ResponseInterface::class);
-        $response->method('getStatusCode')->willReturn($statusCode);
-        $response->method('getReasonPhrase')->willReturn($reasonPhrase);
-        $bodyMock = $this->createMock(StreamInterface::class);
-        $bodyMock->method('getContents')->willReturn($content);
-        $response->method('getBody')->willReturn($bodyMock);
-        return $response;
+        $this->assertSame('application/json, application/pdf', $options[RequestOptions::HEADERS]['Accept']);
     }
 }
