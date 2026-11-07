@@ -194,6 +194,9 @@ class ConnectionTest extends TestCase
         $connection->getFile('shipments/123/sticker');
     }
 
+    /**
+     * @throws UkrposhtaApiException
+     */
     public function testBuildOptions(): void
     {
         $connection = new Connection(self::BEARER, self::TOKEN, $this->clientMock, [
@@ -218,5 +221,10 @@ class ConnectionTest extends TestCase
         $this->assertArrayNotHasKey('Content-Type', $options[RequestOptions::HEADERS]);
         $this->assertSame(['token' => self::TOKEN], $options[RequestOptions::QUERY]);
         $this->assertSame('application/json, application/pdf', $options[RequestOptions::HEADERS]['Accept']);
+
+        //invalid body
+        $this->expectException(UkrposhtaApiException::class);
+        $this->expectExceptionMessage('Invalid request body: Inf and NaN cannot be JSON encoded');
+        $this->object->buildOptions([], ['weight' => NAN]);
     }
 }

@@ -7,7 +7,7 @@ namespace SergiyNezbritskiy\Ukrposhta;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
-use GuzzleHttp\Utils;
+use JsonException;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -203,17 +203,31 @@ class Connection
      * @param array $query
      * @param array|null $body
      * @return array
-     * @SuppressWarnings(PHPMD.StaticAccess)
+     * @throws UkrposhtaApiException
      */
     public function buildOptions(array $query, ?array $body = null): array
     {
         $query['token'] = $this->token;
         $options = $this->mergeOptions($query, ['Accept' => 'application/json, application/pdf']);
         if ($body !== null) {
-            $options[RequestOptions::BODY] = Utils::jsonEncode($body, JSON_UNESCAPED_UNICODE);
+            $options[RequestOptions::BODY] = $this->encode($body);
             $options[RequestOptions::HEADERS]['Content-Type'] = 'application/json';
         }
         return $options;
+    }
+
+    /**
+     * @param array $body
+     * @return string
+     * @throws UkrposhtaApiException
+     */
+    private function encode(array $body): string
+    {
+        try {
+            return json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        } catch (JsonException $e) {
+            throw new UkrposhtaApiException('Invalid request body: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /**

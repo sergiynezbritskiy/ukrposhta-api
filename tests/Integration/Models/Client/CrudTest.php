@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SergiyNezbritskiy\Ukrposhta\Tests\Integration\Models\Client;
 
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use SergiyNezbritskiy\Ukrposhta\Models\Client;
 use SergiyNezbritskiy\Ukrposhta\Tests\AssertEntityByPropertiesTrait;
@@ -71,40 +72,53 @@ class CrudTest extends TestCase implements ConstantsInterface
         ]);
         $addresses = $this->model->getAddresses($clientUuid);
         $this->assertCount(2, $addresses);
-        $secondaryAddresses = array_values(array_filter($addresses, fn(array $address) => !$address['main']));
-        $this->assertCount(1, $secondaryAddresses, 'The main address can not be removed');
-        $this->model->deleteAddress($secondaryAddresses[0]['uuid']);
-        $this->assertCount(1, $this->model->getAddresses($clientUuid));
+        $secondaryAddress = $this->findEntity(
+            $addresses,
+            fn(array $address) => !$address['main'],
+            'Secondary address'
+        );
+        $this->model->deleteAddress($secondaryAddress['uuid']);
+        $addresses = $this->model->getAddresses($clientUuid);
+        $this->assertCount(1, $addresses);
+        $this->assertTrue((bool)$addresses[0]['main'], 'The main address can not be removed');
 
         $phones = $this->model->getPhones($clientUuid);
         $this->assertCount(2, $phones);
-        $phoneToDelete = $this->findSecondary($phones, 'phoneNumber', $updatedPhone);
+        $phoneToDelete = $this->findEntity(
+            $phones,
+            fn(array $phone) => !str_contains((string)$phone['phoneNumber'], $updatedPhone),
+            'Secondary phone'
+        );
         $this->model->deletePhone($phoneToDelete['uuid']);
         $this->assertCount(1, $this->model->getPhones($clientUuid));
 
         $emails = $this->model->getEmails($clientUuid);
         $this->assertCount(2, $emails);
-        $emailToDelete = $this->findSecondary($emails, 'email', $updatedEmail);
+        $emailToDelete = $this->findEntity(
+            $emails,
+            fn(array $email) => $email['email'] !== $updatedEmail,
+            'Secondary email'
+        );
         $this->model->deleteEmail($emailToDelete['uuid']);
         $this->assertCount(1, $this->model->getEmails($clientUuid));
     }
 
     /**
-     * Finds the entity which does not match the current main value
+     * Finds the first entity matching the condition, fails the test if there is none
      *
-     * @param array $entities
-     * @param string $property
-     * @param string $mainValue
+     * @param iterable<array> $entities
+     * @param callable $matches
+     * @param string $description
      * @return array
      */
-    private function findSecondary(array $entities, string $property, string $mainValue): array
+    private function findEntity(iterable $entities, callable $matches, string $description): array
     {
         foreach ($entities as $entity) {
-            if (!str_contains((string)$entity[$property], $mainValue)) {
+            if ($matches($entity)) {
                 return $entity;
             }
         }
-        $this->fail('Secondary entity not found');
+        throw new AssertionFailedError($description . ' not found');
     }
 
     /**
